@@ -6,7 +6,12 @@ const configCanvas = {
 	canvasFillStyle: "#fff",
 	canvasTexAlign: "center",
 	canwasWidthCell: 15,
+	width: 1280,
+	height: 120,
+	x: 1270,
+	y: 60,
 	//Скорость перемещения
+	speed: 9,
 };
 
 /**
@@ -112,6 +117,7 @@ class Cell {
 	constructor(x, y, dx, dy) {
 		this.x = x;
 		this.y = y;
+		this.dx = dx;
 	}
 
 	setX(newX) {
@@ -129,31 +135,58 @@ class Cell {
 	/**
 	 * Создать ячейку
 	 */
-	drawCell(timeline) {
-		const [lastX, lastY] = timeline.getPosition();
+	drawCell() {
 		ctx.beginPath();
-		ctx.moveTo(lastX, lastY + 30);
-		ctx.lineTo(lastX, lastY + 20);
-		ctx.lineTo(lastX + CELL_WIDTH, lastY + 20);
-		timeline.setX(lastX + CELL_WIDTH);
+		ctx.moveTo(this.x, this.y + 30);
+		ctx.lineTo(this.x, this.y + 20);
+		ctx.lineTo(this.x + CELL_WIDTH, this.y + 20);
 		ctx.stroke();
+	}
+
+	/**
+	 * Обновлять координаты timeline
+	 */
+	update() {
+		this.x -= CELL_WIDTH;
+	}
+}
+
+/**
+ * Класс BigCell - ячейка Timeline
+ */
+class BigCell {
+	constructor(x, y, dx, dy) {
+		this.x = x;
+		this.y = y;
+		this.dx = dx;
+	}
+
+	setX(newX) {
+		this.x = newX;
+	}
+
+	setY(newY) {
+		this.y = newY;
+	}
+
+	getPosition() {
+		return [this.x, this.y];
 	}
 
 	/**
 	 * Создать большую ячейку
 	 */
-	drawBigCell(timeMarkerHours, timeMarkerMinutes, timeline) {
-		const [lastX, lastY] = timeline.getPosition();
+	drawBigCell(posX, posY, timeMarkerHours, timeMarkerMinutes) {
 		ctx.beginPath();
-		ctx.moveTo(lastX, lastY + 40);
-		ctx.lineTo(lastX, lastY + 20);
-		const xPos = lastX;
-		const yPosText = lastY + 55;
+		ctx.moveTo(posX, posY + 40);
+		ctx.lineTo(posX, posY + 20);
+		const xPos = posX;
+		const yPosText = posY + 55;
 
 		ctx.fillText(`${timeMarkerHours}:${timeMarkerMinutes}`, xPos, yPosText);
-		ctx.lineTo(lastX + CELL_WIDTH, lastY + 20);
+		ctx.lineTo(posX + CELL_WIDTH, posY + 20);
 
-		timeline.setX(lastX + CELL_WIDTH);
+		timeline.setX(posX + CELL_WIDTH);
 		ctx.stroke();
 	}
 }
@@ -233,21 +266,37 @@ function createTimeline(timelineObj) {
 	createCells(roundTo10(timePiece), timeStart, timelineObj);
 }
 
+let fps, fpsInterval, startTime, now, then, elapsed;
+
+function startAnimating(fps) {
+	fpsInterval = 1000 / fps;
+	then = Date.now();
+	startTime = then;
+	animate();
+}
+
 /**
  * Главная функция
  */
-function startRender() {
-	//Очистить canvas от старых данных
+function animate() {
+	requestAnimationFrame(animate);
+	now = Date.now();
+	elapsed = now - then;
+	//Если время бежит слишком быстро то мы его уменьшаем
+	if (elapsed > fpsInterval) {
+		then = now - (elapsed % fpsInterval);
+		//Очистить canvas от старых данных
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		const cell = new Cell(configCanvas.x, configCanvas.y, 10);
+		configCanvas.x -= configCanvas.speed;
+		cell.drawCell();
+		cell.update();
 
-	ctx.clearRect(0, 60, canvas.width + 1000, canvas.height + 200);
-	//Изначальные координаты по x и по y для Timeline
-	const timeline = new Timeline(15, 50);
-	timeline.render();
-
-	const timeStart = new Date();
-
-	request = requestAnimationFrame(startRender);
+		const timeStart = new Date();
+	}
 }
+
+startAnimating(15);
 
 /*
  Округлять на 10
@@ -303,8 +352,8 @@ canvas.addEventListener("click", function (e) {
 	console.log("click");
 });
 
-canvas.addEventListener("mouseout", function (e) {
-	console.log("mouseout");
-});
+// canvas.addEventListener("mouseout", function (e) {
+// 	//console.log("mouseout");
+// });
 
-startRender();
+animate();
