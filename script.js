@@ -111,53 +111,6 @@ class Timemarker {
 }
 
 /**
- * Класс Cell - ячейка Timeline
- */
-class Cell {
-	constructor(x, y, dx, dy) {
-		this.x = x;
-		this.y = y;
-		this.dx = dx;
-	}
-
-	setX(newX) {
-		this.x = newX;
-	}
-
-	setY(newY) {
-		this.y = newY;
-	}
-
-	getPosition() {
-		return [this.x, this.y];
-	}
-
-	/**
-	 * Создать ячейку
-	 */
-	drawCell() {
-		ctx.beginPath();
-		ctx.moveTo(this.x, this.y + 30);
-		ctx.lineTo(this.x, this.y + 20);
-		ctx.lineTo(this.x + CELL_WIDTH, this.y + 20);
-		ctx.stroke();
-	}
-
-	/**
-	 * Обновлять координаты timeline
-	 */
-	update() {
-		//debugger;
-		if(this.x > 0){
-			this.x -= this.dx;
-			console.log(this.x);
-			this.drawCell();
-		}
-		
-	}
-}
-
-/**
  * Класс BigCell - ячейка Timeline
  */
 class BigCell {
@@ -182,17 +135,15 @@ class BigCell {
 	/**
 	 * Создать большую ячейку
 	 */
-	drawBigCell(posX, posY, timeMarkerHours, timeMarkerMinutes) {
+	drawBigCell(timeMarkerHours, timeMarkerMinutes) {
 		ctx.beginPath();
-		ctx.moveTo(posX, posY + 40);
-		ctx.lineTo(posX, posY + 20);
-		const xPos = posX;
-		const yPosText = posY + 55;
+		ctx.moveTo(this.x, this.y + 40);
+		ctx.lineTo(this.x, this.y + 20);
+		const xPos = this.x;
+		const yPosText = this.y + 55;
 
 		ctx.fillText(`${timeMarkerHours}:${timeMarkerMinutes}`, xPos, yPosText);
-		ctx.lineTo(posX + CELL_WIDTH, posY + 20);
-
-		timeline.setX(posX + CELL_WIDTH);
+		ctx.lineTo(this.x + CELL_WIDTH, this.y + 20);
 		ctx.stroke();
 	}
 }
@@ -269,20 +220,36 @@ function animate() {
 		//Очистить canvas от старых данных
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		//debugger;
-		const cell = new Cell(configCanvas.x, configCanvas.y, 1);
-		//configCanvas.x -= configCanvas.speed;
-		//cell.drawCell();
-		cells.push(cell);
-		cells.forEach(element => {
-			element.update()
-		});
+		
+
+		for (let i = configCanvas.x; i > 0; i -= 10) {
+			if (i % 60 === 0) {
+				let timeMarker = new Date();
+			let timeMarkerHours = new Date(timeMarker).getHours();
+			let timeMarkerMinutes = new Date(timeMarker).getMinutes();
+				let cell = new BigCell(i, 60);
+				cell.drawBigCell(timeMarkerHours, timeMarkerMinutes);
+			}  else {
+				let cell = new Cell(i, 60);
+				cell.drawCell();
+			}
+		}
+		// const cell = new Cell(configCanvas.x, configCanvas.y, 1);
+		
+		// cell.drawCell();
+		configCanvas.x -= configCanvas.speed;
+		//cells.push(cell);
+		//cell.update()
+		// cells.forEach(element => {
+		// 	element.update()
+		// });
 
 		const timeStart = new Date();
 	}
 }
 
 
-startAnimating(15);
+startAnimating(1);
 
 
 

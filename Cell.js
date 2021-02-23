@@ -34,7 +34,12 @@ class Cell {
 	/**
 	 * Обновлять координаты timeline
 	 */
-	update(dx) {
-		this.x -= dx;
+	update() {
+		//debugger;
+		if(this.x > 0){
+			this.x -= this.dx;
+			console.log(this.x);
+			this.drawCell();
+		}
 	}
 }
