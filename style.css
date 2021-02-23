@@ -1,20 +1,13 @@
 body {
-  background: rgba(100, 145, 250, 0.3);
+	background: #262e3c;
 }
-#canvas {
-  margin-left: 20px;
-  margin-right: 0;
-  margin-bottom: 20px;
-  border: thin solid #aaaaaa;
-  cursor: crosshair;
-  padding: 0;
+
+.timeline__canvas-wrap {
+	overflow: hidden;
 }
-#controls {
-  margin: 20px 0px 20px 20px;
-}
-#rubberbandDiv {
-  position: absolute;
-  border: 3px solid blue;
-  cursor: crosshair;
-  display: none;
+
+.vc-timeline__canvas {
+	width: 100%;
+	margin-left: 40px;
+	cursor: pointer;
 }
