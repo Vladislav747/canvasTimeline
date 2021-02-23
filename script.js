@@ -147,7 +147,13 @@ class Cell {
 	 * Обновлять координаты timeline
 	 */
 	update() {
-		this.x -= CELL_WIDTH;
+		//debugger;
+		if(this.x > 0){
+			this.x -= this.dx;
+			console.log(this.x);
+			this.drawCell();
+		}
+		
 	}
 }
 
@@ -189,37 +195,6 @@ class BigCell {
 		timeline.setX(posX + CELL_WIDTH);
 		ctx.stroke();
 	}
-}
-
-/**
- * Создать ячейку Timeline
- */
-function drawCell(timeline) {
-	const [lastX, lastY] = timeline.getPosition();
-	ctx.beginPath();
-	ctx.moveTo(lastX, lastY + 30);
-	ctx.lineTo(lastX, lastY + 20);
-	ctx.lineTo(lastX + CELL_WIDTH, lastY + 20);
-	timeline.setX(lastX + CELL_WIDTH);
-	ctx.stroke();
-}
-
-/**
- * Создать большую ячейку
- */
-function drawBigCell(timeMarkerHours, timeMarkerMinutes, timeline) {
-	const [lastX, lastY] = timeline.getPosition();
-	ctx.beginPath();
-	ctx.moveTo(lastX, lastY + 40);
-	ctx.lineTo(lastX, lastY + 20);
-	const xPos = lastX;
-	const yPosText = lastY + 55;
-
-	ctx.fillText(`${timeMarkerHours}:${timeMarkerMinutes}`, xPos, yPosText);
-	ctx.lineTo(lastX + CELL_WIDTH, lastY + 20);
-
-	timeline.setX(lastX + CELL_WIDTH);
-	ctx.stroke();
 }
 
 /**
@@ -279,6 +254,8 @@ function startAnimating(fps) {
 	animate();
 }
 
+const cells = [];
+
 /**
  * Главная функция
  */
@@ -291,17 +268,24 @@ function animate() {
 		then = now - (elapsed % fpsInterval);
 		//Очистить canvas от старых данных
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		newMinute();
-		const cell = new Cell(configCanvas.x, configCanvas.y, 10);
-		configCanvas.x -= configCanvas.speed;
-		cell.drawCell();
-		cell.update();
+		//debugger;
+		const cell = new Cell(configCanvas.x, configCanvas.y, 1);
+		//configCanvas.x -= configCanvas.speed;
+		//cell.drawCell();
+		cells.push(cell);
+		cells.forEach(element => {
+			element.update()
+		});
 
 		const timeStart = new Date();
 	}
 }
 
+
 startAnimating(15);
+
+
+
 
 /*
  Округлять на 10
