@@ -268,6 +268,10 @@ function createTimeline(timelineObj) {
 
 let fps, fpsInterval, startTime, now, then, elapsed;
 
+/**
+ * Тормозить анимацию
+ * @param {*} fps
+ */
 function startAnimating(fps) {
 	fpsInterval = 1000 / fps;
 	then = Date.now();
@@ -287,6 +291,7 @@ function animate() {
 		then = now - (elapsed % fpsInterval);
 		//Очистить canvas от старых данных
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		newMinute();
 		const cell = new Cell(configCanvas.x, configCanvas.y, 10);
 		configCanvas.x -= configCanvas.speed;
 		cell.drawCell();
