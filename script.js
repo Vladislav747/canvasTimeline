@@ -154,16 +154,32 @@ function animate() {
 		then = now - (elapsed % fpsInterval);
 		//Очистить canvas от старых данных
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		//debugger;
-		createTimeline();
-		configCanvas.x -= configCanvas.speed;
-		//cells.push(cell);
-		//cell.update()
-		// cells.forEach(element => {
-		// 	element.update()
-		// });
+		//createTimeline();
+		ctx.beginPath()
+	let position = 0
+      for (let i = 0; i < 720 + 1; i++) {
+        ctx.moveTo(position +0.5, 0)
+        if (i % 60 === 0) {
+          ctx.lineTo(position +0.5, 15)
+          ctx.fillText ("10:00", position, 15 + 10 + 10, 20)
+        } else if (i % 10 === 0) {
+          ctx.lineTo(position +0.5, 10)
+        } else {
+          ctx.lineTo(position +0.5, 5)
+        }
+        
+        position += configCanvas.speed;
+		console.log(position);
+        //ctx.strokeStyle = TICK_COLOR
+        ctx.stroke()
+        ctx.translate(0, 0)
+      }
+      ctx.moveTo(0.5, 0)
+      ctx.lineTo(0.5, 25)
+      ctx.stroke()
+      ctx.translate(0, 0)
 
-		const timeStart = new Date();
+		
 	}
 }
 
