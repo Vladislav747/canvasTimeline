@@ -78,8 +78,6 @@ function drawBigCell(x, y, timeMarkerHours, timeMarkerMinutes, cellWidth) {
 	ctx.stroke();
 }
 
-
-
 /**
  * Сгенерировать ячейки Timeline
  */

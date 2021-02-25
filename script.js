@@ -6,10 +6,10 @@ const configCanvas = {
 	canvasFillStyle: "#fff",
 	canvasTexAlign: "center",
 	canwasWidthCell: 2,
-	width: 1280,
+	width: 1080,
 	height: 100,
 	x: 0,
-	y: 60,
+	y: 50,
 	//Скорость перемещения
 	speed: 1,
 	//Количество меток 
@@ -104,7 +104,7 @@ function handleMouseMove(e) {
 function drawHorizontalLine(ctx){
     ctx.beginPath();
     ctx.moveTo(0, 0 + configCanvas.y); 
-    ctx.lineTo(canvas.width - 460, 0 + configCanvas.y);
+    ctx.lineTo(canvas.width - 240, 0 + configCanvas.y);
     ctx.stroke()
     ctx.closePath();
 }
@@ -128,7 +128,7 @@ const timeStart = new Date(
     context.clearRect(0, 0, canvas.width, canvas.height)
     context.translate(0, 0)
     context.lineWidth = 1
-    drawHorizontalLine(context);
+    //drawHorizontalLine(context);
     context.beginPath()
     
     let position = 0

@@ -2,12 +2,41 @@ body {
 	background: #262e3c;
 }
 
+.vc-timeline{
+	user-select: none;
+    position: relative;
+    z-index: 1;
+}
+
 .timeline__canvas-wrap {
 	overflow: hidden;
+  position: relative;
+  padding: 10px 40px 0;
+  background: #262E3C;
 }
 
 .vc-timeline__canvas {
 	width: 100%;
 	margin-left: 40px;
-	cursor: pointer;
+	cursor: grab;
+}
+
+.vc-timeline__rewind-prev, .vc-timeline__rewind-next{
+  position: absolute;
+  transform: translate(50%, 50%);
+  top: 0;
+  width: 40px;
+  height: 49px;
+  box-sizing: border-box;
+  cursor: pointer;
+      display: flex;
+    align-items: center;
+}
+
+.vc-timeline__rewind-prev{
+  left: 0;
+}
+
+.vc-timeline__rewind-next{
+  right: 0;
 }
