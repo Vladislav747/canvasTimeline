@@ -5,24 +5,29 @@ const configCanvas = {
 	canvasStrokeStyle: "grey",
 	canvasFillStyle: "#fff",
 	canvasTexAlign: "center",
-	canwasWidthCell: 15,
+	canwasWidthCell: 2,
 	width: 1280,
-	height: 120,
+	height: 100,
 	x: 0,
 	y: 60,
 	//Скорость перемещения
 	speed: 1,
-	//Количество меток
-	numberOfMarks: 6 * 12,
+	//Количество меток 
+	numberOfMarks: 6 * 10,
 };
 
-/**
- * Настройки метки времени
- */
-const configCurrentTimeline = {
-	x: 0,
-	y: 0,
-};
+let offset = 0
+var isMouseDown = false;
+var lastX = 0 
+var _element
+var isDown = false
+var offsetX
+var canvasOffsetOnPage
+const risksNumForDraw = 60 * 10;
+const _canvas = document.getElementById("canvas");
+const ctx = setupCanvas(canvas);
+
+
 
 /**
  * Начальная установка canvas
@@ -31,7 +36,6 @@ const configCurrentTimeline = {
 function setupCanvas(canvas) {
 	//Для масштаба таймлайна
 	// dpr {number}
-	//ТУт спецом поменял
 	var dpr = configCanvas.canvasDpr || window.devicePixelRatio;
 	var rect = canvas.getBoundingClientRect();
 	canvas.width = Math.floor(rect.width * dpr);
@@ -48,204 +52,137 @@ function setupCanvas(canvas) {
 	return ctx;
 }
 
-const canvas = document.getElementById("canvas");
-const ctx = setupCanvas(canvas);
-const CELL_WIDTH = configCanvas.canwasWidthCell;
 
-/**
- * Создать ячейку
- */
-function drawCell(x, y, cellWidth) {
-	ctx.beginPath();
-	ctx.moveTo(x, y + 30);
-	ctx.lineTo(x, y + 20);
-	ctx.lineTo(x + cellWidth, y + 20);
-	ctx.stroke();
+function handleMouseDown(e) {
+
+  // if we're not dragging, just exit
+  /*if (!isDown) {
+      return;
+  }*/
+  isDown = true
+
+  // tell the browser we'll handle this event
+  e.preventDefault();
+  e.stopPropagation();
+
+  // get the current mouse position
+  offsetX = parseInt(e.clientX - canvasOffsetOnPage);
+  drawTicks()
+
+}
+
+function handleMouseUp(e) {
+  // tell the browser we'll handle this event
+  e.preventDefault();
+  e.stopPropagation();
+
+  // stop the drag
+  isDown = false;
+}
+
+function handleMouseMove(e) {
+
+  // if we're not dragging, just exit
+  if (!isDown) {
+      return;
+  }
+
+  // tell the browser we'll handle this event
+  e.preventDefault();
+  e.stopPropagation();
+
+  // get the current mouse position
+  offset = parseInt(e.clientX - canvasOffsetOnPage)
+
+  drawTicks()
 }
 
 /**
- * Создать большую ячейку
+ * Нарисовать таймлайн линию
+ * @param {*} ctx 
  */
-function drawBigCell(x, y, timeMarkerHours, timeMarkerMinutes, cellWidth) {
-	ctx.beginPath();
-	ctx.moveTo(x, y + 40);
-	ctx.lineTo(x, y + 20);
-	const xPos = x;
-	const yPosText = y + 55;
-
-	ctx.fillText(`${timeMarkerHours}:${timeMarkerMinutes}`, xPos, yPosText);
-	ctx.lineTo(x + cellWidth, y + 20);
-	ctx.stroke();
-}
-
-
-
-/**
- * Сгенерировать ячейки Timeline
- */
-function createCells(x, y, timePiece, timeStart, offset) {
-	const teamPieceSeconds = timePiece / 1000;
-	
-	for (let i = offset; i <= teamPieceSeconds; i += 10) {
-		if (i % 60 === 0) {
-			let timeMarker = timeStart.valueOf() + i * 1000;
-			let timeMarkerHours = new Date(timeMarker).getHours();
-			let timeMarkerMinutes = new Date(timeMarker).getMinutes();
-
-			drawBigCell(i, y, timeMarkerHours, timeMarkerMinutes, configCanvas.canwasWidthCell);
-		}  else {
-			drawCell(i, y, configCanvas.canwasWidthCell);
-		}
-		if (i === teamPieceSeconds) {
-			createCurrentTimeMaker(i, y);
-		}
-	}
-	
+function drawHorizontalLine(ctx){
+    ctx.beginPath();
+    ctx.moveTo(0, 0 + configCanvas.y); 
+    ctx.lineTo(canvas.width - 460, 0 + configCanvas.y);
+    ctx.stroke()
+    ctx.closePath();
 }
 
 /**
- * Создать сам таймлайн
+ * Нарисовать метки
  */
-function createTimeline() {
-	const currentTime = new Date();
+function drawTicks() {
 
-	//Количество мини делений между большими отделениями
+    const context = _canvas.getContext("2d")
 
-	/*
-      Отрезок времени для таймлайна
-      Текущее время минус 12 минут
-    */
-	const timeStart = new Date(
-		new Date().setMinutes(currentTime.getMinutes() - 12)
-	);
-	const timeEnd = new Date();
-	const timePiece =
-		new Date() -
-		new Date(currentTime.setMinutes(currentTime.getMinutes() - 12)).valueOf();
-	let offset = configCanvas.x;
-		createCells(0, 60, roundTo10(timePiece), timeStart, offset);
-		offset += configCanvas.speed;
-}
-
-let fps, fpsInterval, startTime, now, then, elapsed;
-
-/**
- * Тормозить анимацию
- * @param {*} fps
- */
-function startAnimating(fps) {
-	fpsInterval = 1000 / fps;
-	then = Date.now();
-	startTime = then;
-	animate();
-}
-
-const cells = [];
-
-/**
- * Главная функция
- */
-function animate() {
-	requestAnimationFrame(animate);
-	now = Date.now();
-	elapsed = now - then;
-	//Если время бежит слишком быстро то мы его уменьшаем
-	if (elapsed > fpsInterval) {
-		then = now - (elapsed % fpsInterval);
-		//Очистить canvas от старых данных
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		//createTimeline();
-		ctx.beginPath()
-	let position = 0
-      for (let i = 0; i < 720 + 1; i++) {
-        ctx.moveTo(position +0.5, 0)
-        if (i % 60 === 0) {
-          ctx.lineTo(position +0.5, 15)
-          ctx.fillText ("10:00", position, 15 + 10 + 10, 20)
-        } else if (i % 10 === 0) {
-          ctx.lineTo(position +0.5, 10)
-        } else {
-          ctx.lineTo(position +0.5, 5)
-        }
-        
-        position += configCanvas.speed;
-		console.log(position);
-        //ctx.strokeStyle = TICK_COLOR
-        ctx.stroke()
-        ctx.translate(0, 0)
-      }
-      ctx.moveTo(0.5, 0)
-      ctx.lineTo(0.5, 25)
-      ctx.stroke()
-      ctx.translate(0, 0)
-
-		
-	}
-}
-
-
-startAnimating(5);
-
-
-
-
-/*
- Округлять на 10
+    /*
+    Отрезок времени для таймлайна
+    Текущее время минус 12 минут
 */
-function roundTo10(num) {
-	return Math.round(num / 10) * 10;
+const currentTime = new Date();
+const timeStart = new Date(
+    new Date().setMinutes(currentTime.getMinutes() - 10)
+);
+
+    context.clearRect(0, 0, canvas.width, canvas.height)
+    context.translate(0, 0)
+    context.lineWidth = 1
+    drawHorizontalLine(context);
+    context.beginPath()
+    
+    let position = 0
+    for (let i = offset; i < risksNumForDraw + 1 + offset; i++) {
+    context.moveTo(position+0.5, 0 + configCanvas.y )
+    if (i % 60 === 0) {
+        let timeMarker = timeStart.valueOf() + i * 1000;
+        let timeMarkerHours = new Date(timeMarker).getHours();
+        let timeMarkerMinutes = new Date(timeMarker).getMinutes();
+        
+        context.lineTo(position, 20 + configCanvas.y);
+        
+        
+        context.fillText (`${timeMarkerHours}:${timeMarkerMinutes}`, position, 20 + 15 + configCanvas.y, 20)
+    } else if (i % 10 === 0) {
+        
+        context.lineTo(position, 10 + configCanvas.y)
+    } 
+        
+    
+    position = position + configCanvas.canwasWidthCell;
+
+    context.stroke()
+    context.translate(0, 0)
+    }
+    
+    context.moveTo(offsetX+0.5, 0 + configCanvas.y)
+    context.lineTo(offsetX+0.5, 25 + configCanvas.y)
+    context.stroke();
+    context.translate(0, 0)
 }
 
-function createCurrentTimeMaker(x, y) {
+  setInterval(() => {
+    if (offset == 60) {
+      offset = 0
+    } else {
+      offset++;
+    }
+    
+    drawTicks();
+    showCurrentTime();
+  }, 400)
 
-	const xPos = x;
-	const yPos = y;
-	ctx.beginPath();
 
-	ctx.lineTo(xPos, yPos);
-	ctx.lineTo(xPos + 5, yPos + 5);
-	ctx.lineTo(xPos + 10, yPos);
-	ctx.fill();
-	ctx.closePath();
-	ctx.beginPath();
-	ctx.moveTo(xPos + 5, yPos + 5);
-	ctx.lineTo(xPos + 5, yPos + 45);
-	ctx.lineWidth = 2;
-	ctx.stroke();
-	ctx.lineWidth = 1;
-}
+  function showCurrentTime(){
+    var currentdate = new Date(); 
+var datetime = "Last Sync: " + currentdate.getDate() + "/"
+                + (currentdate.getMonth()+1)  + "/" 
+                + currentdate.getFullYear() + " @ "  
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
 
-/**
- * Выбрать время метка
- * @param {*} cursorX 
- * @param {*} x 
- * @param {*} y 
- */
-function createChooseTimeMaker(cursorX, x, y) {
+    const timeDiv = document.getElementById("current-time");
+    timeDiv.innerText = datetime;
 
-	const xPos = cursorX - 20;
-	const yPos = 50;
-	ctx.beginPath();
-
-	ctx.moveTo(xPos + 5, yPos);
-	ctx.lineTo(xPos + 5, yPos + 40);
-	// timemarkerObj.setX(xPos + 5);
-	// timemarkerObj.setY(yPos);
-	ctx.stroke();
-}
-
-// canvas.addEventListener("mousemove", function (e) {
-// 	console.log(e.clientX, "mousemove");
-// 	console.log(e.clientY, "mousemove");
-// 	createChooseTimeMaker(e.clientX, timeMarker);
-// });
-
-canvas.addEventListener("click", function (e) {
-	console.log("click");
-});
-
-// canvas.addEventListener("mouseout", function (e) {
-// 	//console.log("mouseout");
-// });
-
-animate();
+  }
