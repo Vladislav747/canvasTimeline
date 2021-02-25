@@ -18,7 +18,6 @@ body {
 .vc-timeline__canvas {
 	width: 100%;
 	margin-left: 40px;
-	cursor: grab;
 }
 
 .vc-timeline__rewind-prev, .vc-timeline__rewind-next{
@@ -39,4 +38,115 @@ body {
 
 .vc-timeline__rewind-next{
   right: 0;
+}
+
+.vc-timeline__slider-wrap{
+	/*box-sizing:  считает алгоритм расчета высоты блока с учетом или не учетом margin, padding и border;*/
+	/* box-sizing: initial;
+    margin-top: -38px;
+    padding-top: 38px;
+    overflow: hidden;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0; */
+}
+
+.vc-timeline__slider_clearfix {
+    /* position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
+    height: 28px; */
+}
+
+.vc-timeline__slider-btn {
+    position: absolute;
+    height: 49px;
+    width: 9px;
+    top: 10px;
+    z-index: 105;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    text-align: center;
+	cursor: ew-resize;
+}
+
+
+
+.vc-timeline__slider-btn.hovered svg {
+    opacity: 1;
+}
+
+.vc-timeline__slider-btn-hover {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    top: -11px;
+    left: -5px;
+    transition: opacity 400ms ease;
+    opacity: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.3);
+    z-index: 106;
+	
+}
+
+.vc-timeline__slider-line{
+	box-sizing: initial;
+    display: inline-block;
+    width: 1px;
+    background: #fff;
+    height: 100%;
+    border-left: 1px solid #262626;
+    border-right: 1px solid #262626
+}
+
+.vc-timeline__slider-time{
+	position: absolute;
+	width: 68px;
+	padding: 5px 0;
+	bottom: calc(80% + 5px);
+	margin-left: -32px;
+	z-index: 104;
+	background: #000;
+	color: #fff;
+	border-radius: 4px;
+	text-align: center;
+	font-size: 11px;
+
+}
+
+.vc-timeline__slider-time-line{
+	position: absolute;
+    height: 49px;
+    width: 9px;
+    top: 15px;
+    z-index: 105;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    text-align: center;
+	opacity: 0;
+}
+
+.vc-timeline__current-line{
+	box-sizing: initial;
+    display: inline-block;
+    width: 1px;
+    background: #fff;
+    height: 100%;
+    border-left: 1px solid #262626;
+    border-right: 1px solid #262626;
+	
 }

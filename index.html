@@ -12,7 +12,28 @@
 			  <svg width="22" height="18" viewBox="0 0 22 18" fill="none" class="sc-kJFuea iwdYMG timeline-container__back-svg-btn"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.7823 3.48359V0.593938C12.7823 0.0160088 12.404 -0.173132 11.9416 0.173626L1.01351 8.36972C0.551162 8.71542 0.551162 9.2839 1.01351 9.63065L11.9416 17.8267C12.404 18.1724 12.7823 17.9844 12.7823 17.4064V14.5168L5.42678 9.00018L12.7823 3.48359Z" fill="white"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M20.3478 0.173748L9.41969 8.36984C8.95735 8.71554 8.95735 9.28402 9.41969 9.63078L20.3478 17.8269C20.8102 18.1726 21.1884 17.9845 21.1884 17.4066V0.59406C21.1884 0.0161309 20.8102 -0.17301 20.3478 0.173748Z" fill="white"></path></svg>
 			</div>
 			<div class="vc-timeline">
-				<canvas id="canvas" class="vc-timeline__canvas" height="120" width="1200"></canvas>
+				<div class="vc-timeline__slider-wrap">
+					<div class="vc-timeline__slider_clearfix"></div>
+					<div class="vc-timeline__slider">
+						<div class="vc-timeline__slider-btn" id="vc-timeline__slider-pointer" style="left: calc(75.7825% - 4.5px);">
+							<span class="vc-timeline__slider-line"></span>
+							<svg class="vc-icon vc-icon-slider vc-timeline__slider-btn-hover" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 15" id="slider">
+								<g fill="none" fill-rule="evenodd"><circle fill="#FFF" cx="7.5" cy="7.5" r="7.5"></circle><path fill="#8C8C8C" d="M5 6h1v3H5zm2 0h1v3H7zm2 0h1v3H9z"></path></g>
+							</svg>
+						</div>
+						<span>
+							<span class="vc-timeline__slider-time" style="left: 50%;">21:09:17</span>
+							<div class="vc-timeline__slider-time-line" id="current-pointer" style="left: 50%;">
+								<span class="vc-timeline__current-line"></span>
+							</div>
+						</span>
+					</div>
+					
+				</div>
+				<div class="timeline__canvas-wrap">
+					<canvas id="canvas" class="vc-timeline__canvas" height="120" width="1200" style="width: 850px;"></canvas>
+				</div>
+				
 			</div>
 			<div class="vc-timeline__rewind-next">
 			   <svg width="21" height="18" viewBox="0 0 21 18" class="sc-cipWhh dEEPDV timeline-container__forward-svg-btn"><path fill-rule="evenodd" clip-rule="evenodd" d="M20.1753 8.36987L9.24701 0.173629C8.78466 -0.173135 8.40637 0.0160091 8.40637 0.593949V3.48365L15.762 9.00035L8.40637 14.5171V17.4068C8.40637 17.9836 8.78466 18.1728 9.24701 17.8271L20.1753 9.63083C20.6377 9.28407 20.6377 8.71559 20.1753 8.36987Z" fill="white"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M11.769 8.36987L0.84064 0.173629C0.378288 -0.173135 0 0.0160091 0 0.593949V17.4068C0 17.9836 0.378288 18.1728 0.84064 17.8271L11.769 9.63083C12.2313 9.28407 12.2313 8.71559 11.769 8.36987Z" fill="white"></path></svg>

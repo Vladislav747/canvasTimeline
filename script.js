@@ -6,14 +6,16 @@ const configCanvas = {
 	canvasFillStyle: "#fff",
 	canvasTexAlign: "center",
 	canwasWidthCell: 2,
-	width: 1080,
-	height: 100,
+  //Должно соотвествовать ширине style у canvas
+	width: 850,
+	height: 50,
 	x: 0,
-	y: 50,
+	y: 20,
 	//Скорость перемещения
 	speed: 1,
-	//Количество меток 
-	numberOfMarks: 6 * 10,
+	//Количество меток - если обновляешь количество меток то обнови offset минут 
+	numberOfMarks: 60 * 8,
+  minuteOffset: 8,
 };
 
 let offset = 0
@@ -23,8 +25,11 @@ var _element
 var isDown = false
 var offsetX
 var canvasOffsetOnPage
-const risksNumForDraw = 60 * 10;
+
 const _canvas = document.getElementById("canvas");
+const _timelinePointer = document.getElementById("vc-timeline__slider-pointer");
+const _currentPointer = document.getElementById("current-pointer");
+
 const ctx = setupCanvas(canvas);
 
 
@@ -122,7 +127,7 @@ function drawTicks() {
 */
 const currentTime = new Date();
 const timeStart = new Date(
-    new Date().setMinutes(currentTime.getMinutes() - 10)
+    new Date().setMinutes(currentTime.getMinutes() - configCanvas.minuteOffset)
 );
 
     context.clearRect(0, 0, canvas.width, canvas.height)
@@ -132,7 +137,7 @@ const timeStart = new Date(
     context.beginPath()
     
     let position = 0
-    for (let i = offset; i < risksNumForDraw + 1 + offset; i++) {
+    for (let i = offset; i < configCanvas.numberOfMarks + 1 + offset; i++) {
     context.moveTo(position+0.5, 0 + configCanvas.y )
     if (i % 60 === 0) {
         let timeMarker = timeStart.valueOf() + i * 1000;
@@ -175,7 +180,7 @@ const timeStart = new Date(
 
   function showCurrentTime(){
     var currentdate = new Date(); 
-var datetime = "Last Sync: " + currentdate.getDate() + "/"
+    var datetime = "Last Sync: " + currentdate.getDate() + "/"
                 + (currentdate.getMonth()+1)  + "/" 
                 + currentdate.getFullYear() + " @ "  
                 + currentdate.getHours() + ":"  
@@ -186,3 +191,47 @@ var datetime = "Last Sync: " + currentdate.getDate() + "/"
     timeDiv.innerText = datetime;
 
   }
+
+
+  _timelinePointer.addEventListener("mousemove", function(e){
+    _timelinePointer.classList.add("hovered")
+  });
+
+  _timelinePointer.addEventListener("mouseleave", function(e){
+    _timelinePointer.classList.remove("hovered")
+  })
+
+  // _timelinePointer.onmousedown = function(e){
+  //   console.log(e.clientX);
+  //   // 1 % =  850 / 71% = 11,97
+   
+  // }
+
+
+  const slideEl = document.querySelector(".vc-timeline__slider-time");
+  _timelinePointer.onmouseup = function(e){
+    debugger;
+    const pxToProcent = 850 / 71;
+    
+    const leftOffset = 7.3 + ((e.clientX - 110) / pxToProcent);
+    
+    _timelinePointer.style.left = `${leftOffset}%`;
+  }
+
+  _canvas.onmouseover = function(e){
+    _currentPointer.style.opacity = 1;
+  }
+
+  _canvas.onmousemove = function(e){
+    _currentPointer.style.opacity = 1;
+    const pxToProcent = 850 / 71;
+    
+    const leftOffset = e.clientX;
+    slideEl.style.left =  `${leftOffset - 50}px`;
+    _currentPointer.style.left = `${leftOffset - 50}px`;
+  }
+
+  _canvas.onmouseout = function(e){
+    _currentPointer.style.opacity = 0;
+  }
+ 
