@@ -8,10 +8,10 @@ const configCanvas = {
 	canwasWidthCell: 15,
 	width: 1280,
 	height: 120,
-	x: 1270,
+	x: 0,
 	y: 60,
 	//Скорость перемещения
-	speed: 9,
+	speed: 1,
 	//Количество меток
 	numberOfMarks: 6 * 12,
 };
@@ -83,22 +83,24 @@ function drawBigCell(x, y, timeMarkerHours, timeMarkerMinutes, cellWidth) {
 /**
  * Сгенерировать ячейки Timeline
  */
-function createCells(x, y, timePiece, timeStart) {
+function createCells(x, y, timePiece, timeStart, offset) {
 	const teamPieceSeconds = timePiece / 1000;
-
-	for (let i = 0; i < teamPieceSeconds; i += 10) {
+	
+	for (let i = offset; i <= teamPieceSeconds; i += 10) {
 		if (i % 60 === 0) {
 			let timeMarker = timeStart.valueOf() + i * 1000;
 			let timeMarkerHours = new Date(timeMarker).getHours();
 			let timeMarkerMinutes = new Date(timeMarker).getMinutes();
 
-			drawBigCell(timeMarkerHours, timeMarkerMinutes);
-		} else if (i === teamPieceSeconds - 10) {
-			createCurrentTimeMaker();
-		} else {
-			drawCell(x, y, CELL_WIDTH);
+			drawBigCell(i, y, timeMarkerHours, timeMarkerMinutes, configCanvas.canwasWidthCell);
+		}  else {
+			drawCell(i, y, configCanvas.canwasWidthCell);
+		}
+		if (i === teamPieceSeconds) {
+			createCurrentTimeMaker(i, y);
 		}
 	}
+	
 }
 
 /**
@@ -120,7 +122,9 @@ function createTimeline() {
 	const timePiece =
 		new Date() -
 		new Date(currentTime.setMinutes(currentTime.getMinutes() - 12)).valueOf();
-	createCells(0, 60, roundTo10(timePiece), timeStart);
+	let offset = configCanvas.x;
+		createCells(0, 60, roundTo10(timePiece), timeStart, offset);
+		offset += configCanvas.speed;
 }
 
 let fps, fpsInterval, startTime, now, then, elapsed;
@@ -152,20 +156,6 @@ function animate() {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		//debugger;
 		createTimeline();
-
-		// for (let i = configCanvas.x; i > 0; i -= 10) {
-		// 	if (i % 60 === 0) {
-		// 		let timeMarker = new Date();
-		// 		let timeMarkerHours = new Date(timeMarker).getHours();
-		// 		let timeMarkerMinutes = new Date(timeMarker).getMinutes();
-		// 		drawBigCell(timeMarkerHours, timeMarkerMinutes);
-		// 	}  else {
-		// 		drawCell();
-		// 	}
-		// }
-		// const cell = new Cell(configCanvas.x, configCanvas.y, 1);
-		
-		// cell.drawCell();
 		configCanvas.x -= configCanvas.speed;
 		//cells.push(cell);
 		//cell.update()
@@ -178,7 +168,7 @@ function animate() {
 }
 
 
-startAnimating(1);
+startAnimating(5);
 
 
 
@@ -192,7 +182,7 @@ function roundTo10(num) {
 
 function createCurrentTimeMaker(x, y) {
 
-	const xPos = x - 20;
+	const xPos = x;
 	const yPos = y;
 	ctx.beginPath();
 
@@ -209,9 +199,14 @@ function createCurrentTimeMaker(x, y) {
 	ctx.lineWidth = 1;
 }
 
+/**
+ * Выбрать время метка
+ * @param {*} cursorX 
+ * @param {*} x 
+ * @param {*} y 
+ */
 function createChooseTimeMaker(cursorX, x, y) {
 
-	ctx.clearRect(x, y, 2, y + 40);
 	const xPos = cursorX - 20;
 	const yPos = 50;
 	ctx.beginPath();
@@ -222,8 +217,6 @@ function createChooseTimeMaker(cursorX, x, y) {
 	// timemarkerObj.setY(yPos);
 	ctx.stroke();
 }
-
-const timeMarker = new Timemarker(0, 0);
 
 // canvas.addEventListener("mousemove", function (e) {
 // 	console.log(e.clientX, "mousemove");
