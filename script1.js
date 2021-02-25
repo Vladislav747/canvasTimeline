@@ -7,7 +7,7 @@ const configCanvas = {
 	canvasTexAlign: "center",
 	canwasWidthCell: 15,
 	width: 1280,
-	height: 120,
+	height: 100,
 	x: 0,
 	y: 60,
 	//Скорость перемещения
@@ -23,7 +23,7 @@ var _element
 var isDown = false
 var offsetX
 var canvasOffsetOnPage
-const risksNumForDraw = 60 * 5;
+const risksNumForDraw = 60 * 10;
 const _canvas = document.getElementById("canvas");
 const ctx = setupCanvas(canvas);
 
@@ -98,30 +98,52 @@ function handleMouseMove(e) {
   drawTicks()
 }
 
+function drawHorizontalLine(ctx){
+    ctx.beginPath();
+    ctx.moveTo(0, 0); 
+    ctx.lineTo(canvas.width - 460, 0);
+    ctx.stroke()
+    ctx.closePath();
+}
+
   function drawTicks() {
 
       const context = _canvas.getContext("2d")
 
+      /*
+      Отрезок времени для таймлайна
+      Текущее время минус 12 минут
+    */
+    const currentTime = new Date();
+	const timeStart = new Date(
+		new Date().setMinutes(currentTime.getMinutes() - 10)
+	);
+
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       context.translate(0, 0)
       context.lineWidth = 1
+      drawHorizontalLine(context);
       context.beginPath()
       
       let position = 0
       for (let i = offset; i < risksNumForDraw + 1 + offset; i++) {
-        console.log(i, "i")
         context.moveTo(position+0.5, 0)
         if (i % 60 === 0) {
-          context.lineTo(position, 15)
-          context.fillText ("10:00", position, 15 + 15, 20)
+            let timeMarker = timeStart.valueOf() + i * 1000;
+			let timeMarkerHours = new Date(timeMarker).getHours();
+			let timeMarkerMinutes = new Date(timeMarker).getMinutes();
+            
+          context.lineTo(position, 20);
+          
+         
+          context.fillText (`${timeMarkerHours}:${timeMarkerMinutes}`, position, 20 + 15, 20)
         } else if (i % 10 === 0) {
+         
           context.lineTo(position, 10)
-          context.fillText ("10", position, 15 + 10, 20)
         } 
         
-        position = position + 3
+        position = position + 2
 
-        //context.strokeStyle = TICK_COLOR
         context.stroke()
         context.translate(0, 0)
       }
@@ -139,4 +161,4 @@ function handleMouseMove(e) {
     }
     
     drawTicks()
-  }, 1000)
+  }, 500)
