@@ -9,6 +9,7 @@ body {
 }
 
 .timeline__canvas-wrap {
+  width: fit-content;
 	overflow: hidden;
   position: relative;
   padding: 10px 40px 0;

@@ -143,6 +143,7 @@ const timeStart = new Date(
         let timeMarker = timeStart.valueOf() + i * 1000;
         let timeMarkerHours = new Date(timeMarker).getHours();
         let timeMarkerMinutes = new Date(timeMarker).getMinutes();
+        timeMarkerMinutes = timeMarkerMinutes < 10 ? `0${timeMarkerMinutes}` : timeMarkerMinutes;
         
         context.lineTo(position, 20 + configCanvas.y);
         
