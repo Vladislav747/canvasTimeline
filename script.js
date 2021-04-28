@@ -32,8 +32,8 @@ const CONFIG_CANVAS = {
   //Количество меток - если обновляешь количество меток то обнови offset минут 
   NUMBER_OF_MARKS: 60 * 8,
   MINUTE_OFFSET: 8,
+  IS_ADD_MINUTE: false,
 };
-
 let offset = 0;
 var isMouseDown = false;
 var lastX = 0;
@@ -137,12 +137,11 @@ function drawTicks() {
 
   /*
   Отрезок времени для таймлайна
-  Текущее время минус 8 минут
   */
   const currentTime = new Date();
-  const timeStart = new Date(
-    new Date().setMinutes(currentTime.getMinutes() - CONFIG_CANVAS.MINUTE_OFFSET)
-  );
+  // const timeStart = new Date(
+  //   new Date().setMinutes(currentTime.getMinutes() - CONFIG_CANVAS.MINUTE_OFFSET)
+  // );
 
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.translate(0, 0);
@@ -150,8 +149,18 @@ function drawTicks() {
   //drawHorizontalLine(context);
   context.beginPath();
 
+  let timeStart = new Date();
+
+  console.log(timeStart.valueOf(), "curr");
+
+  if (CONFIG_CANVAS.IS_ADD_MINUTE) {
+    timeStart = timeStart.setMinutes(timeStart.getMinutes() + 1);
+  }
+  console.log(timeStart.valueOf(), "+ 1 min");
+  console.log(CONFIG_CANVAS.IS_ADD_MINUTE);
+
   let position = 0;
-  const arr1 = generateMarks(new Date().valueOf(), CONFIG_CANVAS.NUMBER_OF_MARKS);
+  const arr1 = generateMarks(timeStart.valueOf(), CONFIG_CANVAS.NUMBER_OF_MARKS);
   for (let i = offset; i < arr1.length + offset; i++) {
     context.moveTo(position + 0.5, 0 + CONFIG_CANVAS.y);
     if (arr1[i]?.draw && arr1[i]?.text) {
@@ -177,9 +186,12 @@ function drawTicks() {
 setInterval(() => {
   if (offset == 60) {
     offset = 0;
+    CONFIG_CANVAS.IS_ADD_MINUTE = true;
+    console.log(CONFIG_CANVAS.IS_ADD_MINUTE, "interval");
   } else {
     offset++;
   }
+  console.log(offset);
 
   drawTicks();
   showCurrentTime();
@@ -218,7 +230,7 @@ _timelinePointer.addEventListener("mouseleave", function (e) {
 
 const slideEl = document.querySelector(".vc-timeline__slider-time");
 _timelinePointer.onmouseup = function (e) {
-  debugger;
+
   const pxToProcent = 850 / 71;
 
   const leftOffset = 7.3 + ((e.clientX - 110) / pxToProcent);
@@ -247,7 +259,6 @@ function generateMarks(currentTimestamp, numberOfMarks) {
 
   let arr = [];
   let startTimestamp = currentTimestamp - 1000 * 60 * CONFIG_CANVAS.MINUTE_OFFSET;
-  console.log((currentTimestamp - startTimestamp) / 1000 / 60);
   for (i = 0; i <= numberOfMarks; i++) {
     if (i % 60 == 0) {
       let timeMarker = startTimestamp.valueOf() + i * 1000;
