@@ -1,0 +1,15 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ESNext",
+    "sourceMap": true,
+    "declaration": true,
+    "outDir": "./dist/",
+    "noImplicitAny": true
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

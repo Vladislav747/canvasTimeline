@@ -1,7 +1,7 @@
 /**
  * Класс Timemarker
  */
-class Timemarker {
+export default class Timemarker {
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
