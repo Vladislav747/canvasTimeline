@@ -142,9 +142,12 @@ export default class Timeline extends EventEmitter {
       if (canMove) {
         this.emit("tick");
         const delta = now - this._updateTimer;
+
         if (delta > 1000) {
+          console.log(this._updateTimer, "_updateTimer translateTimeline");
           this._updateTimer = now - (delta - 1000);
           this._offset += this._pxPerSecond;
+          console.log(this._offset, " this._offset  translateTimeline");
         }
       }
     };
@@ -175,6 +178,7 @@ export default class Timeline extends EventEmitter {
     const renderDashes = (context: CanvasRenderingContext2D) => {
       //Начальный индекс
       const startIndex = Math.floor(this._offset / this._dashGap);
+      console.log(startIndex, "startIndex renderDashes");
 
       for (let i = startIndex; i <= this._dashCount + startIndex; i++) {
         const isMinute = i % this._secondsDashes === 0;
@@ -325,12 +329,12 @@ export default class Timeline extends EventEmitter {
           });
         }
       } else {
-        console.log(
-          this._moving,
-          this._mouseX,
-          this._mouseY,
-          "this._canvas.onmousemove"
-        );
+        // console.log(
+        //   this._moving,
+        //   this._mouseX,
+        //   this._mouseY,
+        //   "this._canvas.onmousemove"
+        // );
         //console.log("emit mouseMoving");
 
         debounce(() => {
@@ -365,6 +369,7 @@ export default class Timeline extends EventEmitter {
   public addOffset(pixels: number): void {
     console.log(this._offset, "berfore addOffset");
     console.log(pixels, "pixels addOffset");
+    debugger;
     this._offset += pixels;
   }
 

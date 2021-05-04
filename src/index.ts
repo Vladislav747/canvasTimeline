@@ -32,8 +32,9 @@ const timeline = new Timeline(canvas, {
 });
 timeline.start();
 
+//Когда зажимаем таймлайн и начинаем его перемещать то добавляем к offset разницу(дельту)
 timeline.on("mousePressedMoving", (e: TimelineMouseMoveEvent) => {
-  console.log(e, "e", "mousePressedMoving");
+  console.log(e.deltaX, "e.deltaX", "mousePressedMoving");
   timeline.addOffset(-e.deltaX);
 });
 timeline.on("tick", () => {
