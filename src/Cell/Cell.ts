@@ -1,3 +1,4 @@
+import { formatTime } from "../helpers";
 import { CellOptions } from "./types/CellTypes";
 
 export const MINUTE_DASH_HEIGHT = 20;
@@ -51,45 +52,12 @@ export default class Cell {
       context.beginPath();
       context.fillStyle = TEXT_COLOR;
       //Меряем размер текста чтобы адекватно выставить его метку
-      const textSize = context.measureText(this.formattedTime);
+      let formattedTime = formatTime(this._timestamp);
+      const textSize = context.measureText(formattedTime);
       const textX = x - textSize.width / 2;
       const textY = y + height + 12;
-      context.fillText(this.formattedTime, textX, textY);
+      context.fillText(formattedTime, textX, textY);
       context.closePath();
     }
-  }
-
-  /**
-   * Получить форматированное время
-   */
-  get formattedTime(): string {
-    return `${this.hours}:${this.minutes}:${this.seconds}`;
-  }
-
-  /**
-   * Получить часы
-   */
-  get hours(): string {
-    return this._timestamp.getHours() < 10
-      ? `0${this._timestamp.getHours()}`
-      : this._timestamp.getHours().toString();
-  }
-
-  /**
-   * Получить минуты
-   */
-  get minutes(): string {
-    return this._timestamp.getMinutes() < 10
-      ? `0${this._timestamp.getMinutes()}`
-      : this._timestamp.getMinutes().toString();
-  }
-
-  /**
-   * Получить секунды
-   */
-  get seconds(): string {
-    return this._timestamp.getSeconds() < 10
-      ? `0${this._timestamp.getSeconds()}`
-      : this._timestamp.getSeconds().toString();
   }
 }

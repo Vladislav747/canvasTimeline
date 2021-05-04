@@ -10,13 +10,47 @@ export const getMinuteDashesCount = (width: number): number => {
   return minuteBreakpoints.desktop;
 };
 
-export const debounce = (func: Function, timeout: number) => {
-  let innerTimeout: any;
+/**
+ * Форматирование времени
+ * @param {Date} time - объект времени
+ * @param {boolean} withSeconds - добавление секунд
+ */
+export const formatTime = (time: Date, withSeconds = false): string => {
+  const hours = (): string => {
+    return time.getHours() < 10
+      ? `0${time.getHours()}`
+      : time.getHours().toString();
+  };
+
+  const minutes = (): string => {
+    return time.getMinutes() < 10
+      ? `0${time.getMinutes()}`
+      : time.getMinutes().toString();
+  };
+
+  const seconds = (): string => {
+    return time.getSeconds() < 10
+      ? `0${time.getSeconds()}`
+      : time.getSeconds().toString();
+  };
+
+  if (withSeconds) return `${hours()}:${minutes()}:${seconds()}`;
+
+  return `${hours()}:${minutes()}`;
+};
+
+/**
+ * Вызов функции в определенное кол-во секунд
+ * @param {Function} func функция для вызова
+ * @param {number} timeout кол-во мс
+ */
+export const debounce = (
+  func: () => unknown,
+  timeout: number
+): (() => unknown) => {
+  let innerTimeout: NodeJS.Timeout;
   return function () {
-    const fnCall = () => {
-      func.apply(this, arguments);
-    };
     clearTimeout(innerTimeout);
-    innerTimeout = setTimeout(fnCall, timeout);
+    innerTimeout = setTimeout(func, timeout);
   };
 };

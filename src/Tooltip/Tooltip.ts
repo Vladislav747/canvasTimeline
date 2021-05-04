@@ -1,12 +1,9 @@
 // import RoundedRect from "./shapes/RoundedRect";
+import { TooltipOptions } from "./types/TooltipType.d";
 
-export type TooltipOptions = {
-  x: number;
-  y: number;
-  text: string;
-  visible: boolean;
-};
-
+/**
+ * Значения Tooltip по умолчанию
+ */
 const DefaultTooltipOptions: TooltipOptions = {
   x: -1,
   y: -1,
@@ -31,7 +28,12 @@ export default class Tooltip {
     this._tooltipPadding = 4;
   }
 
-  render(context: CanvasRenderingContext2D) {
+  /**
+   * Отрисовать canvas элемент
+   * @param context
+   * @returns void
+   */
+  render(context: CanvasRenderingContext2D): void {
     if (!this._visible) return;
     context.beginPath();
     const textHeight = ~~context.font.split(/\s/gm)[0].slice(0, 2);
@@ -42,15 +44,7 @@ export default class Tooltip {
     const textX = x + this._tooltipPadding;
     const textY = y + this._tooltipPadding + textHeight;
     context.fillStyle = "#333333";
-    // new RoundedRect({
-    //   x: x,
-    //   y: y,
-    //   width: textWidth,
-    //   height: textHeight,
-    //   radius: this._tooltipRadius,
-    //   padding: this._tooltipPadding,
-    // }).createShape(context);
-    context.fill();
+
     context.closePath();
     context.beginPath();
     context.fillStyle = "#FFFFFF";
@@ -58,23 +52,44 @@ export default class Tooltip {
     context.closePath();
   }
 
+  /**
+   * Установить координата y для Tooltip
+   */
   set y(value: number) {
     this._y = value;
   }
+
+  /**
+   * Получить координата y для Tooltip
+   */
   get y(): number {
     return this._y;
   }
 
+  /**
+   * Установить координата x для Tooltip
+   */
   set x(value: number) {
     this._x = value;
   }
+
+  /**
+   * Получить координата x для Tooltip
+   */
   get x(): number {
     return this._x;
   }
 
+  /**
+   * Установить text для Tooltip
+   */
   set text(value: string) {
     this._text = value;
   }
+
+  /**
+   * Получить text для Tooltip
+   */
   get text(): string {
     return this._text;
   }
@@ -82,6 +97,7 @@ export default class Tooltip {
   set visible(value: boolean) {
     this._visible = value;
   }
+
   get visible(): boolean {
     return this._visible;
   }

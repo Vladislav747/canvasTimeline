@@ -1,8 +1,9 @@
 import Cell from "../Cell/Cell";
 import Tooltip from "../Tooltip/Tooltip";
+import Cursor from "../Cursor/Cursor";
 import { CanvasOptions, TimelineOptions } from "./types/TimelineType";
 import { EventEmitter } from "events";
-import { debounce } from "../helpers";
+import { debounce, formatTime } from "../helpers";
 
 const DefaultCanvasOptions: CanvasOptions = {
   width: 640,
@@ -18,14 +19,14 @@ export default class Timeline extends EventEmitter {
   private _canvas: HTMLCanvasElement;
   private readonly _context: CanvasRenderingContext2D;
   private _width: number;
-  private _height: number;
+  private readonly _height: number;
   private readonly _fontSize: number;
   private readonly _fontFamily: string;
 
   private _offset: number;
   private _startTime: Date | undefined;
   private _minuteDashes: number;
-  private _secondsDashes: number;
+  private readonly _secondsDashes: number;
   private _dashGap: number;
   private _dashCount: number;
   private _pxPerSecond: number;
@@ -37,9 +38,11 @@ export default class Timeline extends EventEmitter {
   //Это скорость в миллисекндуах таймлайна чем меньше тем быстрее и наоборот
   private _velocityInMs = 1000;
 
+  private _disableClick: boolean;
   private _mouseX: number;
   private _mouseY: number;
 
+  private _timeTooltipDate: Date;
   private _timeTooltip: Tooltip;
 
   constructor(canvas: HTMLCanvasElement, options: TimelineOptions) {
@@ -58,6 +61,8 @@ export default class Timeline extends EventEmitter {
     this._fontSize = canvasOptions.fontSize;
     this._fontFamily = canvasOptions.fontFamily;
 
+    startTime.setSeconds(0);
+
     this._offset = 0;
     this._startTime = startTime;
     this._minuteDashes = minuteDashes;
@@ -65,10 +70,12 @@ export default class Timeline extends EventEmitter {
 
     this._paused = false;
     this._moving = false;
+    this._disableClick = false;
     //Координаты мыши
     this._mouseX = 0;
     this._mouseY = 0;
     //Новая tooltip подсказка
+    this._timeTooltipDate = new Date();
     this._timeTooltip = new Tooltip();
 
     this.init();
@@ -113,47 +120,37 @@ export default class Timeline extends EventEmitter {
     // }
 
     const updateTooltip = () => {
-      const timestampMs =
-        this._startTime.getTime() +
-        (this._offset / this._pxPerSecond) * 1000 +
-        (this._mouseX / this._pxPerSecond) * 1000;
+      const updateTooltip = () => {
+        const timestampMs =
+          this._startTime.getTime() +
+          (this._offset / this._pxPerSecond) * 1000 +
+          (this._mouseX / this._pxPerSecond) * 1000;
 
-      const time = new Date(timestampMs);
+        this._timeTooltipDate = new Date(timestampMs);
 
-      const hours =
-        time.getHours() < 10
-          ? `0${time.getHours()}`
-          : time.getHours().toString();
-      const minutes =
-        time.getMinutes() < 10
-          ? `0${time.getMinutes()}`
-          : time.getMinutes().toString();
-      const seconds =
-        time.getSeconds() < 10
-          ? `0${time.getSeconds()}`
-          : time.getSeconds().toString();
+        this._timeTooltip.text = formatTime(this._timeTooltipDate, true);
+      };
 
-      this._timeTooltip.text = `${hours}:${minutes}:${seconds}`;
-    };
+      const translateTimeline = () => {
+        const canMove = !this._paused && !this._moving;
 
-    const translateTimeline = () => {
-      const canMove = !this._paused && !this._moving;
-
-      if (canMove) {
-        this.emit("tick");
-        const delta = now - this._updateTimer;
-
-        if (delta > 1000) {
-          console.log(this._updateTimer, "_updateTimer translateTimeline");
-          this._updateTimer = now - (delta - 1000);
-          this._offset += this._pxPerSecond;
-          console.log(this._offset, " this._offset  translateTimeline");
+        if (canMove) {
+          this.emit("tick");
+          const delta = now - this._updateTimer;
+          if (delta > 1000 && delta < 2000) {
+            this._updateTimer = now - (delta - 1000);
+            this._offset += this._pxPerSecond;
+          } else if (delta > 2000) {
+            const factor = Math.round(delta / 1000);
+            this._offset += this._pxPerSecond * factor;
+            this._updateTimer = now - (delta - 1000 * factor);
+          }
         }
-      }
-    };
+      };
 
-    updateTooltip();
-    translateTimeline();
+      updateTooltip();
+      translateTimeline();
+    };
   }
 
   /**
@@ -164,7 +161,7 @@ export default class Timeline extends EventEmitter {
      * Отрисовать фон
      * @param context
      */
-    const renderBackground = (context: CanvasRenderingContext2D) => {
+    const renderBackground = (context: CanvasRenderingContext2D): void => {
       context.beginPath();
       context.fillStyle = "#757575";
       context.fillRect(0, 0, this._width, this._height);
@@ -175,7 +172,7 @@ export default class Timeline extends EventEmitter {
      * Отрисовать деления
      * @param context
      */
-    const renderDashes = (context: CanvasRenderingContext2D) => {
+    const renderDashes = (context: CanvasRenderingContext2D): void => {
       //Начальный индекс
       const startIndex = Math.floor(this._offset / this._dashGap);
       console.log(startIndex, "startIndex renderDashes");
@@ -205,9 +202,27 @@ export default class Timeline extends EventEmitter {
       context.closePath();
     };
 
+    /**
+     * Нарисовать голубой курсор
+     * @param context
+     */
+    const renderCursor = (context: CanvasRenderingContext2D) => {
+      new Cursor({
+        x: this._width / 2 - Cursor.strokeWidth,
+        y: 0,
+        time: this.time,
+      }).render(context);
+    };
+
     renderBackground(this._context);
     renderDashes(this._context);
     renderQualityLine(this._context);
+    renderCursor(this._context);
+
+    /**
+     * Отрисовать подсказку
+     */
+    this._timeTooltip.render(this._context);
   }
 
   /**
@@ -220,6 +235,8 @@ export default class Timeline extends EventEmitter {
     this._updateTimer = performance.now();
     this.calcDimensions();
     this.registerCanvasEvents();
+
+    this.setSeconds(Date.now());
 
     //Eventlistener на canvas при наведении на canvas
     this._context.canvas.onmousedown = (e: MouseEvent) => {
@@ -251,6 +268,15 @@ export default class Timeline extends EventEmitter {
   }
 
   /**
+   * Установить _offset
+   * @param {number} timestamp
+   */
+  public setSeconds(timestamp: number): void {
+    this._offset =
+      ((timestamp - this._startTime.getTime()) / 1000) * this._pxPerSecond;
+  }
+
+  /**
    * Посчитать кол-во делений и кол-во gap между делениями
    * @param width
    * @param minutesCount
@@ -269,108 +295,199 @@ export default class Timeline extends EventEmitter {
   }
 
   /**
+   * Обработчик при наведении мыши на canvas
+   * @param x
+   * @param y
+   */
+  private canvasEnterEventHandler(x: number, y: number): void {
+    this._timeTooltip.visible = true;
+
+    if (x > 0) this._mouseX = x;
+    if (y > 0) this._mouseY = y;
+  }
+
+  /**
+   * Обработчик при нажатии мыши на canvas
+   * @param x
+   * @param y
+   */
+  private canvasDownEventHandler(x: number, y: number): void {
+    this._moving = true;
+    if (x > 0) this._mouseX = x;
+    if (y > 0) this._mouseY = y;
+
+    this.emit("mouseMovingStarted", {
+      x: this._mouseX,
+      y: this._mouseY,
+    });
+  }
+
+  /**
+   * Обработчик при наведения мыши на canvas
+   * @param x
+   * @param y
+   */
+  private canvasMoveEventHandler(
+    x: number,
+    y: number,
+    dx: number,
+    dy: number
+  ): void {
+    if (x > 0) this._mouseX = x;
+    if (y > 0) this._mouseY = y;
+    debugger;
+    this._timeTooltip.x = this._mouseX;
+
+    if (this._moving) {
+      this._disableClick = true;
+      this._moving = true;
+
+      this.addOffset(-dx);
+
+      if (this._mouseX > this._canvas.width - 10 && 10 < this._mouseX) {
+        this._moving = false;
+
+        this.emit("mouseMovingStopped", {
+          x: this._mouseX,
+          y: this._mouseY,
+        });
+      } else {
+        this.emit("mousePressedMoving", {
+          x: this._mouseX,
+          y: this._mouseY,
+          deltaX: dx,
+          deltaY: dy,
+        });
+      }
+    } else {
+      debounce(() => {
+        this.emit("mouseMoving", {
+          x: this._mouseX,
+          y: this._mouseY,
+        });
+      }, 2000);
+    }
+  }
+
+  /**
+   * Обработчик при поднятии клика мыши на canvas
+   * @param x
+   * @param y
+   */
+  private canvasUpEventHandler(x: number, y: number): void {
+    this._moving = false;
+    if (x > 0) this._mouseX = x;
+    if (y > 0) this._mouseY = y;
+
+    this.emit("mouseMovingStopped", {
+      x: this._mouseX,
+      y: this._mouseY,
+    });
+  }
+
+  /**
    * Регистрация событий
    *
    */
   private registerCanvasEvents(): void {
     this._canvas.onmouseenter = (e: MouseEvent) => {
-      this._timeTooltip.visible = true;
-
-      this._mouseX = e.offsetX;
-      this._mouseY = e.offsetY;
+      this.canvasEnterEventHandler(e.offsetX, e.offsetY);
     };
 
-    this._canvas.onmousedown = (e: MouseEvent) => {
-      this._moving = true;
-      this._mouseX = e.offsetX;
-      this._mouseY = e.offsetY;
-
-      this.emit("mouseMovingStarted", {
-        x: this._mouseX,
-        y: this._mouseY,
-      });
-    };
-
-    this._canvas.onmousemove = (e: MouseEvent) => {
-      const dx = e.offsetX - this._mouseX;
-      const dy = e.offsetY - this._mouseY;
-      this._mouseX = e.offsetX;
-      this._mouseY = e.offsetY;
-
-      this._timeTooltip.x = this._mouseX;
-
-      if (this._moving) {
-        this._moving = true;
-        console.log(
-          this._mouseX,
-          this._mouseY,
-          this._canvas.width,
-          this._canvas.height
-        );
-
-        if (this._mouseX > this._canvas.width - 10) {
-          this._moving = false;
-          this._mouseX = e.offsetX;
-          this._mouseY = e.offsetY;
-
-          this.emit("mouseMovingStopped", {
-            x: this._mouseX,
-            y: this._mouseY,
-          });
-        } else {
-          console.log(e.offsetX, e.offsetY, this._mouseX, this._mouseY, dx, dy);
-          console.log("emit mousePressedMoving");
-
-          this.emit("mousePressedMoving", {
-            x: this._mouseX,
-            y: this._mouseY,
-            deltaX: dx,
-            deltaY: dy,
-          });
-        }
-      } else {
-        // console.log(
-        //   this._moving,
-        //   this._mouseX,
-        //   this._mouseY,
-        //   "this._canvas.onmousemove"
-        // );
-        //console.log("emit mouseMoving");
-
-        debounce(() => {
-          this.emit("mouseMoving", {
-            x: this._mouseX,
-            y: this._mouseY,
-          });
-        }, 2000);
+    this._canvas.onmousedown = this._canvas.ontouchstart = (
+      e: MouseEvent | TouchEvent
+    ) => {
+      e.preventDefault();
+      //Определяем это нажатие в Desktop
+      if (e instanceof MouseEvent) {
+        this.canvasDownEventHandler(e.offsetX, e.offsetY);
+      } //Либо это нажатие в Mobile
+      else if (e instanceof TouchEvent) {
+        const touch = e.touches[0];
+        const x =
+          touch.clientX - (touch.target as HTMLCanvasElement).offsetLeft;
+        const y = touch.clientY - (touch.target as HTMLCanvasElement).offsetTop;
+        this.canvasDownEventHandler(x, y);
       }
     };
 
-    this._canvas.onmouseup = (e: MouseEvent) => {
-      this._moving = false;
-      this._mouseX = e.offsetX;
-      this._mouseY = e.offsetY;
+    this._canvas.onmousemove = this._canvas.ontouchmove = (
+      e: MouseEvent | TouchEvent
+    ) => {
+      e.preventDefault();
 
-      this.emit("mouseMovingStopped", {
-        x: this._mouseX,
-        y: this._mouseY,
-      });
+      debugger;
+
+      if (e instanceof MouseEvent) {
+        this.canvasMoveEventHandler(
+          e.offsetX,
+          e.offsetY,
+          e.offsetX - this._mouseX,
+          e.offsetY - this._mouseY
+        );
+      } else if (e instanceof TouchEvent) {
+        //Обратить внимание как обрабатываеться touch собыития мобильных
+        const touch = e.touches[0];
+        const x =
+          touch.clientX - (touch.target as HTMLCanvasElement).offsetLeft;
+        const y = touch.clientY - (touch.target as HTMLCanvasElement).offsetTop;
+        this.canvasMoveEventHandler(x, y, x - this._mouseX, y - this._mouseY);
+      }
+    };
+
+    this._canvas.onmouseup = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      if (e instanceof MouseEvent) {
+        this.canvasUpEventHandler(e.offsetX, e.offsetY);
+      } else if (e instanceof TouchEvent) {
+        debugger;
+        this.canvasUpEventHandler(-1, -1);
+      }
     };
 
     this._canvas.onmouseleave = (e: MouseEvent) => {
       this._timeTooltip.visible = false;
     };
+
+    //Обработка нажатия - для выбора времени на canvas
+    this._canvas.onclick = () => {
+      if (this._moving || this._disableClick) {
+        this._disableClick = false;
+        return;
+      }
+
+      this.setTime(this._timeTooltipDate.getTime());
+    };
   }
 
   /**
    * Обновить offset
-   * @param pixels
+   * @param {number} pixels
    */
   public addOffset(pixels: number): void {
     console.log(this._offset, "berfore addOffset");
     console.log(pixels, "pixels addOffset");
-    debugger;
     this._offset += pixels;
+  }
+
+  /**
+   * Добавить оффсет исходя из секунд
+   * @param seconds
+   */
+  public addSeconds(seconds: number): void {
+    this._offset += this._pxPerSecond * seconds;
+  }
+
+  /**
+   * Установить offset исходя из времени
+   * Нужен при клике на canvas
+   * @param timestamp
+   */
+  public setTime(timestamp: number): void {
+    this._offset =
+      ((timestamp - this._startTime.getTime()) / 1000) * this._pxPerSecond -
+      this._width / 2 +
+      Cursor.strokeWidth;
   }
 
   /**
@@ -378,7 +495,9 @@ export default class Timeline extends EventEmitter {
    */
   get time(): Date {
     const timestampMs =
-      this._startTime.getTime() + (this._offset / this._pxPerSecond) * 1000;
+      this._startTime.getTime() +
+      (this._offset / this._pxPerSecond) * 1000 +
+      (this._width / 2 / this._pxPerSecond - Cursor.strokeWidth) * 1000;
     return new Date(timestampMs);
   }
 
