@@ -1,5 +1,6 @@
 // import RoundedRect from "./shapes/RoundedRect";
 import { TooltipOptions } from "./types/TooltipType.d";
+import RoundedRect from "../shapes/roundedRect/RoundedRect";
 
 /**
  * Значения Tooltip по умолчанию
@@ -34,6 +35,7 @@ export default class Tooltip {
    * @returns void
    */
   render(context: CanvasRenderingContext2D): void {
+    //Если подсказка нет то ничего не отрисовывваем
     if (!this._visible) return;
     context.beginPath();
     const textHeight = ~~context.font.split(/\s/gm)[0].slice(0, 2);
@@ -44,11 +46,21 @@ export default class Tooltip {
     const textX = x + this._tooltipPadding;
     const textY = y + this._tooltipPadding + textHeight;
     context.fillStyle = "#333333";
+    new RoundedRect({
+      x: x,
+      y: y + 10,
+      width: textWidth,
+      height: textHeight,
+      radius: this._tooltipRadius,
+      padding: this._tooltipPadding,
+    }).createShape(context);
+    context.fill();
+    context.closePath();
 
     context.closePath();
     context.beginPath();
     context.fillStyle = "#FFFFFF";
-    context.fillText(this._text, textX, textY);
+    context.fillText(this._text, textX, textY + 10);
     context.closePath();
   }
 
