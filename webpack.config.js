@@ -1,35 +1,35 @@
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const path = require("path");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
-  entry: './src/index.ts',
-  mode: 'development',
+  entry: "./src/index.ts",
+  mode: "development",
   output: {
-    filename: 'main.[fullhash].js',
-    path: path.resolve(__dirname, 'dist')
+    filename: "main.[fullhash].js",
+    path: path.resolve(__dirname, "dist"),
   },
   module: {
     rules: [
       {
         test: /\.ts$/,
-        use: 'ts-loader',
-        exclude: /node_modules/
+        use: "ts-loader",
+        exclude: /node_modules/,
       },
       {
         test: /\.css$/,
-        use: 'css-loader',
+        use: "css-loader",
       },
-    ]
+    ],
   },
   resolve: {
-    extensions: ['.ts', '.js']
+    extensions: [".ts", ".js"],
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: './src/index.html'
-    })
+      template: "./src/index.html",
+    }),
   ],
   devServer: {
-    host: 'localhost'
-  }
+    host: "127.0.0.9",
+  },
 };

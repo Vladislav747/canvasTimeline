@@ -1,5 +1,7 @@
 import Cell from "../Cell/Cell";
+import Tooltip from "../Tooltip/Tooltip";
 import { CanvasOptions, TimelineOptions } from "./types/TimelineType";
+import { EventEmitter } from "events";
 
 const DefaultCanvasOptions: CanvasOptions = {
   width: 640,
@@ -11,7 +13,7 @@ const DefaultCanvasOptions: CanvasOptions = {
 /**
  * Класс Timeline
  */
-export default class Timeline {
+export default class Timeline extends EventEmitter {
   private _canvas: HTMLCanvasElement;
   private readonly _context: CanvasRenderingContext2D;
   private _width: number;
@@ -27,14 +29,20 @@ export default class Timeline {
   private _dashCount: number;
   private _pxPerSecond: number;
 
-  private _updateTimer: Date;
+  private _updateTimer: number;
 
   private _paused: boolean;
   private _moving: boolean;
   //Это скорость в миллисекндуах таймлайна чем меньше тем быстрее и наоборот
   private _velocityInMs = 1000;
 
+  private _mouseX: number;
+  private _mouseY: number;
+
+  private _timeTooltip: Tooltip;
+
   constructor(canvas: HTMLCanvasElement, options: TimelineOptions) {
+    super();
     const {
       startTime,
       minuteDashes,
@@ -56,6 +64,11 @@ export default class Timeline {
 
     this._paused = false;
     this._moving = false;
+    //Координаты мыши
+    this._mouseX = 0;
+    this._mouseY = 0;
+    //Новая tooltip подсказка
+    this._timeTooltip = new Tooltip();
 
     this.init();
   }
@@ -64,16 +77,17 @@ export default class Timeline {
    * Начальная функция запуска анимации
    */
   public start(): void {
-    this.tick();
+    this.tick(0);
+    this.emit("started");
   }
 
   //По сути каждую секунду
-  private tick(): void {
-    this.update();
+  private tick(now: number): void {
+    this.update(now);
     this.render();
 
-    requestAnimationFrame(() => {
-      this.tick();
+    requestAnimationFrame((now) => {
+      this.tick(now);
     });
   }
 
@@ -88,14 +102,54 @@ export default class Timeline {
   /**
    * Для обновления данных updateTimer и _offset каждую секунду
    */
-  public update(): void {
-    if (!this._paused) {
-      const delta = Date.now() - this._updateTimer.getTime();
-      if (delta > this._velocityInMs) {
-        this._updateTimer = new Date();
-        this._offset += this._pxPerSecond;
+  public update(now: number): void {
+    // if (!this._paused) {
+    //   const delta = Date.now() - this._updateTimer.getTime();
+    //   if (delta > this._velocityInMs) {
+    //     this._updateTimer = new Date();
+    //     this._offset += this._pxPerSecond;
+    //   }
+    // }
+
+    const updateTooltip = () => {
+      const timestampMs =
+        this._startTime.getTime() +
+        (this._offset / this._pxPerSecond) * 1000 +
+        (this._mouseX / this._pxPerSecond) * 1000;
+
+      const time = new Date(timestampMs);
+
+      const hours =
+        time.getHours() < 10
+          ? `0${time.getHours()}`
+          : time.getHours().toString();
+      const minutes =
+        time.getMinutes() < 10
+          ? `0${time.getMinutes()}`
+          : time.getMinutes().toString();
+      const seconds =
+        time.getSeconds() < 10
+          ? `0${time.getSeconds()}`
+          : time.getSeconds().toString();
+
+      this._timeTooltip.text = `${hours}:${minutes}:${seconds}`;
+    };
+
+    const translateTimeline = () => {
+      const canMove = !this._paused && !this._moving;
+
+      if (canMove) {
+        this.emit("tick");
+        const delta = now - this._updateTimer;
+        if (delta > 1000) {
+          this._updateTimer = now - (delta - 1000);
+          this._offset += this._pxPerSecond;
+        }
       }
-    }
+    };
+
+    updateTooltip();
+    translateTimeline();
   }
 
   /**
@@ -157,19 +211,11 @@ export default class Timeline {
   private init(): void {
     // Устанавливаем шрифт
     this._context.font = `${this._fontSize}px ${this._fontFamily}`;
-    //Расчитываем количество делений и растояние
-    const [dashGap, dashCount] = this.calcDashes(
-      this._width,
-      this._minuteDashes,
-      this._secondsDashes
-    );
-    this._dashGap = dashGap;
-    this._dashCount = dashCount;
-    //Высчитываем кол-во пикселей в 1с
-    this._pxPerSecond = (this._dashGap * this._secondsDashes) / 60;
-    console.log((this._dashGap * this._secondsDashes) / 60);
-    //Текущая дата минус 1 секунда
-    this._updateTimer = new Date(Date.now() - 1000);
+
+    this._updateTimer = performance.now();
+    this.calcDimensions();
+    this.registerCanvasEvents();
+
     //Eventlistener на canvas при наведении на canvas
     this._context.canvas.onmousedown = (e: MouseEvent) => {
       this._moving = true;
@@ -187,6 +233,22 @@ export default class Timeline {
 
   /**
    * Посчитать кол-во делений и кол-во gap между делениями
+   * Занести значения _dashGap, _dashCount и _pxPerSecond
+   */
+  private calcDimensions(): void {
+    const [dashGap, dashCount] = this.calcDashes(
+      this._width,
+      this._minuteDashes,
+      this._secondsDashes
+    );
+    this._dashGap = dashGap;
+    this._dashCount = dashCount;
+    //Высчитываем кол-во пикселей в 1с
+    this._pxPerSecond = (this._dashGap * this._secondsDashes) / 60;
+  }
+
+  /**
+   * Посчитать кол-во делений и кол-во gap между делениями
    * @param width
    * @param minutesCount
    * @param secondsCount
@@ -200,5 +262,69 @@ export default class Timeline {
     const totalDashes = (minutesCount - 1) * secondsCount + minutesCount;
 
     return [width / minutesCount / secondsCount, totalDashes];
+  }
+
+  /**
+   * Регистрация событий
+   *
+   */
+  private registerCanvasEvents(): void {
+    this._canvas.onmouseenter = (e: MouseEvent) => {
+      this._timeTooltip.visible = true;
+
+      this._mouseX = e.offsetX;
+      this._mouseY = e.offsetY;
+    };
+
+    this._canvas.onmousedown = (e: MouseEvent) => {
+      this._moving = true;
+      this._mouseX = e.offsetX;
+      this._mouseY = e.offsetY;
+
+      this.emit("mouseMovingStarted", {
+        x: this._mouseX,
+        y: this._mouseY,
+      });
+    };
+
+    this._canvas.onmousemove = (e: MouseEvent) => {
+      const dx = e.offsetX - this._mouseX;
+      const dy = e.offsetY - this._mouseY;
+      this._mouseX = e.offsetX;
+      this._mouseY = e.offsetY;
+
+      this._timeTooltip.x = this._mouseX;
+
+      if (this._moving) {
+        this._moving = true;
+
+        this.emit("mousePressedMoving", {
+          x: this._mouseX,
+          y: this._mouseY,
+          deltaX: dx,
+          deltaY: dy,
+        });
+      } else {
+        this.emit("mouseMoving", {
+          x: this._mouseX,
+          y: this._mouseY,
+        });
+      }
+    };
+
+    this._canvas.onmouseup = (e: MouseEvent) => {
+      this._moving = false;
+      this._mouseX = e.offsetX;
+      this._mouseY = e.offsetY;
+
+      this.emit("mouseMovingStopped", {
+        x: this._mouseX,
+        y: this._mouseY,
+      });
+    };
+
+    this._canvas.onmouseleave = (e: MouseEvent) => {
+      this._timeTooltip.visible = false;
+    };
   }
 }
