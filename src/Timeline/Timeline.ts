@@ -2,6 +2,7 @@ import Cell from "../Cell/Cell";
 import Tooltip from "../Tooltip/Tooltip";
 import { CanvasOptions, TimelineOptions } from "./types/TimelineType";
 import { EventEmitter } from "events";
+import { debounce } from "../helpers";
 
 const DefaultCanvasOptions: CanvasOptions = {
   width: 640,
@@ -221,14 +222,6 @@ export default class Timeline extends EventEmitter {
       this._moving = true;
       console.log("onMouseDown");
     };
-
-    this._context.canvas.ontouchstart = (e: TouchEvent) => {
-      console.log("ontouchstart");
-    };
-
-    this._context.canvas.ondrag = (e: MouseEvent) => {
-      console.log("ondrag");
-    };
   }
 
   /**
@@ -241,10 +234,16 @@ export default class Timeline extends EventEmitter {
       this._minuteDashes,
       this._secondsDashes
     );
+    console.log(dashGap, "calcDimensions dashGap");
     this._dashGap = dashGap;
+    console.log(dashCount, "calcDimensions dashCount");
     this._dashCount = dashCount;
-    //Высчитываем кол-во пикселей в 1с
+    //Высчитываем кол-во пикселей в секундах
+    //в нашем случае (this._dashGap * this._secondsDashes) - это расстояение между большими делениями
+
     this._pxPerSecond = (this._dashGap * this._secondsDashes) / 60;
+    console.log(this._pxPerSecond, "calcDimensions _pxPerSecond");
+    console.log(this._secondsDashes, "calcDimensions _secondsDashes");
   }
 
   /**
@@ -259,8 +258,9 @@ export default class Timeline extends EventEmitter {
     minutesCount: number,
     secondsCount: number
   ) {
+    console.log(width, minutesCount, secondsCount, "calcDashes");
     const totalDashes = (minutesCount - 1) * secondsCount + minutesCount;
-
+    console.log(totalDashes, "totalDashes calcDashes");
     return [width / minutesCount / secondsCount, totalDashes];
   }
 
@@ -297,18 +297,48 @@ export default class Timeline extends EventEmitter {
 
       if (this._moving) {
         this._moving = true;
+        console.log(
+          this._mouseX,
+          this._mouseY,
+          this._canvas.width,
+          this._canvas.height
+        );
 
-        this.emit("mousePressedMoving", {
-          x: this._mouseX,
-          y: this._mouseY,
-          deltaX: dx,
-          deltaY: dy,
-        });
+        if (this._mouseX > this._canvas.width - 10) {
+          this._moving = false;
+          this._mouseX = e.offsetX;
+          this._mouseY = e.offsetY;
+
+          this.emit("mouseMovingStopped", {
+            x: this._mouseX,
+            y: this._mouseY,
+          });
+        } else {
+          console.log(e.offsetX, e.offsetY, this._mouseX, this._mouseY, dx, dy);
+          console.log("emit mousePressedMoving");
+
+          this.emit("mousePressedMoving", {
+            x: this._mouseX,
+            y: this._mouseY,
+            deltaX: dx,
+            deltaY: dy,
+          });
+        }
       } else {
-        this.emit("mouseMoving", {
-          x: this._mouseX,
-          y: this._mouseY,
-        });
+        console.log(
+          this._moving,
+          this._mouseX,
+          this._mouseY,
+          "this._canvas.onmousemove"
+        );
+        //console.log("emit mouseMoving");
+
+        debounce(() => {
+          this.emit("mouseMoving", {
+            x: this._mouseX,
+            y: this._mouseY,
+          });
+        }, 2000);
       }
     };
 
@@ -326,5 +356,41 @@ export default class Timeline extends EventEmitter {
     this._canvas.onmouseleave = (e: MouseEvent) => {
       this._timeTooltip.visible = false;
     };
+  }
+
+  /**
+   * Обновить offset
+   * @param pixels
+   */
+  public addOffset(pixels: number): void {
+    console.log(this._offset, "berfore addOffset");
+    console.log(pixels, "pixels addOffset");
+    this._offset += pixels;
+  }
+
+  /**
+   * Получить время _startTime
+   */
+  get time(): Date {
+    const timestampMs =
+      this._startTime.getTime() + (this._offset / this._pxPerSecond) * 1000;
+    return new Date(timestampMs);
+  }
+
+  /**
+   * Установить _minutesDashes
+   */
+  set minuteDashes(value: number) {
+    this._minuteDashes = value;
+    this.calcDimensions();
+  }
+
+  /**
+   * Установить _width и _canvas.width
+   */
+  set canvasWidth(value: number) {
+    this._width = value;
+    this.calcDimensions();
+    this._canvas.width = this._width;
   }
 }
