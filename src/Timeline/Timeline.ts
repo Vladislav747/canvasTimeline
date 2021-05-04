@@ -131,26 +131,47 @@ export default class Timeline extends EventEmitter {
         this._timeTooltip.text = formatTime(this._timeTooltipDate, true);
       };
 
-      const translateTimeline = () => {
-        const canMove = !this._paused && !this._moving;
+      const timestampMs =
+        this._startTime.getTime() +
+        (this._offset / this._pxPerSecond) * 1000 +
+        (this._mouseX / this._pxPerSecond) * 1000;
 
-        if (canMove) {
-          this.emit("tick");
-          const delta = now - this._updateTimer;
-          if (delta > 1000 && delta < 2000) {
-            this._updateTimer = now - (delta - 1000);
-            this._offset += this._pxPerSecond;
-          } else if (delta > 2000) {
-            const factor = Math.round(delta / 1000);
-            this._offset += this._pxPerSecond * factor;
-            this._updateTimer = now - (delta - 1000 * factor);
-          }
-        }
-      };
+      const time = new Date(timestampMs);
 
-      updateTooltip();
-      translateTimeline();
+      const hours =
+        time.getHours() < 10
+          ? `0${time.getHours()}`
+          : time.getHours().toString();
+      const minutes =
+        time.getMinutes() < 10
+          ? `0${time.getMinutes()}`
+          : time.getMinutes().toString();
+      const seconds =
+        time.getSeconds() < 10
+          ? `0${time.getSeconds()}`
+          : time.getSeconds().toString();
+
+      this._timeTooltip.text = `${hours}:${minutes}:${seconds}`;
     };
+
+    const translateTimeline = () => {
+      const canMove = !this._paused && !this._moving;
+
+      if (canMove) {
+        this.emit("tick");
+        const delta = now - this._updateTimer;
+
+        if (delta > 1000) {
+          console.log(this._updateTimer, "_updateTimer translateTimeline");
+          this._updateTimer = now - (delta - 1000);
+          this._offset += this._pxPerSecond;
+          console.log(this._offset, " this._offset  translateTimeline");
+        }
+      }
+    };
+
+    updateTooltip();
+    translateTimeline();
   }
 
   /**
@@ -335,7 +356,7 @@ export default class Timeline extends EventEmitter {
   ): void {
     if (x > 0) this._mouseX = x;
     if (y > 0) this._mouseY = y;
-    debugger;
+
     this._timeTooltip.x = this._mouseX;
 
     if (this._moving) {
@@ -416,8 +437,6 @@ export default class Timeline extends EventEmitter {
     ) => {
       e.preventDefault();
 
-      debugger;
-
       if (e instanceof MouseEvent) {
         this.canvasMoveEventHandler(
           e.offsetX,
@@ -440,7 +459,6 @@ export default class Timeline extends EventEmitter {
       if (e instanceof MouseEvent) {
         this.canvasUpEventHandler(e.offsetX, e.offsetY);
       } else if (e instanceof TouchEvent) {
-        debugger;
         this.canvasUpEventHandler(-1, -1);
       }
     };
